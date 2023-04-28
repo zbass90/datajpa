@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/datajpa
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        # show_sql: true  이 선언을 -> org.hibernate.SQL: debug로 log로 대체하는게 좋다
+        format_sql: true
+logging.level:
+  org.hibernate.SQL: debug
+#  org.hibernate.type: trace # (파라미터 바인딩까지 확인 가능)
