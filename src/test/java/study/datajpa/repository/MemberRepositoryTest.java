@@ -12,6 +12,7 @@ import study.datajpa.entity.Team;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -128,6 +129,36 @@ class MemberRepositoryTest {
 
         assertThat(usernameList.get(0).getUsername()).isEqualTo(m1.getUsername());
         assertThat(usernameList.get(1).getUsername()).isEqualTo(m2.getUsername());
+    }
+
+    @Test
+    public void returnType() {
+        /*
+
+        *   기존 JPA는 NoResultException을
+        *   Spring Data JPA에서는 NoResultException을 try...catch로 null을 반환시킴
+        *   Exception VS null => null이 좋고 Optional로 사용하는걸 권장. (java 1.8 부터)
+        *   Optional getOrElse , OrElse 사용
+        *
+        *   값이 여러개 예를 들어 AAA, AAA 2개 이상인데 하나 가지고 올때
+        *   Optional과 관계없이 Exception을 뱉음
+        *   NonUniqueResultException(JPA에서 뱉음) =>
+        *   Sptring Data JPA가 IncorrectResultSizeDataAccessException(공통 DB이슈) 변환해서 뱉음
+        *
+        * */
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        List<Member> aaa = memberRepository.findListByUsername("AAA");
+        assertThat(m1.getUsername()).isEqualTo(aaa.get(0).getUsername());
+
+        Member findMember = memberRepository.findMemberByUsername("AAA");
+        assertThat(m1.getUsername()).isEqualTo(findMember.getUsername());
+
+        Optional<Member> findOptionalMember = memberRepository.findOptionalByUsername("AAA");
+        assertThat(m1.getUsername()).isEqualTo(findOptionalMember.get().getUsername());
     }
 
 }
