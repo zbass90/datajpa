@@ -4,6 +4,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
@@ -161,4 +165,81 @@ class MemberRepositoryTest {
         assertThat(m1.getUsername()).isEqualTo(findOptionalMember.get().getUsername());
     }
 
+    @Test
+    public void paging(){
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.Direction.DESC, "username");
+
+        //when
+        Page<Member> page = memberRepository.findByAge(age, pageRequest); //반환 타입에 따라 total 쿼리 발생에 영향을 줌
+
+        // entity -> Dto 변환
+        Page<MemberDto> toMap = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+        //then
+
+        List<Member> content = page.getContent();
+        long totalElements = page.getTotalElements();
+        assertThat(content.size()).isEqualTo(3); // 페이지에 있는 컨텐츠 갯수
+        assertThat(totalElements).isEqualTo(5); // 총 컨텐츠 갯수
+        assertThat(page.getNumber()).isEqualTo(0); //현재 페이지 번호
+        assertThat(page.getTotalPages()).isEqualTo(2); //전체 페이지 갯수
+        assertThat(page.isFirst()).isTrue(); // 첫번째 페이지인지
+        assertThat(page.hasNext()).isTrue(); // 다음 페이지가 있는지
+        assertThat(page.isLast()).isFalse(); // 마지막 페이지인지
+    }
+
+    @Test
+    public void slicePaging(){
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.Direction.DESC, "username");
+
+        //when
+        Slice<Member> page = memberRepository.findByAge(age, pageRequest); //반환 타입에 따라 total 쿼리 발생에 영향을 줌
+        //then
+
+        List<Member> content = page.getContent();
+        assertThat(content.size()).isEqualTo(3); // 페이지에 있는 컨텐츠 갯수
+        assertThat(page.getNumber()).isEqualTo(0); //현재 페이지 번호
+        assertThat(page.isFirst()).isTrue(); // 첫번째 페이지인지
+        assertThat(page.hasNext()).isTrue(); // 다음 페이지가 있는지
+        assertThat(page.isLast()).isFalse(); // 마지막 페이지인지
+    }
+
+    @Test
+    public void bulkUpdate(){
+        // 벌크연산은 DB에 바로 넣는다
+        // given 영속성 컨텍스트에 있는거지 디비에 있지 않음
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 40));
+
+        //when
+        int resultCount = memberRepository.bulkAgePlus(20);
+
+        //then
+        assertThat(resultCount).isEqualTo(3);
+
+    }
+
+    @Test
+    public void findMemberLazy(){
+        //given
+    }
 }
